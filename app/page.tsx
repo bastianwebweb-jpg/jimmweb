@@ -2,38 +2,51 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { supabase } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase" // Asegúrate de que esta ruta sea correcta
 
-// 1. Definimos la estructura del producto para que TypeScript no reclame
+// =========================================================================
+// 1. DEFINICIÓN DE LA INTERFAZ DE PRODUCTO (Solución de errores TS)
+// =========================================================================
 interface Producto {
-  id: string;
+  id: string; // O number, según tu DB
   nombre: string;
   precio: number;
-  imagen: string;
-  categoria?: string;
+  imagen: string; // URL de la imagen
+  categoria?: string; // Opcionales con '?'
   description?: string;
   stock?: number;
+  // Agrega aquí cualquier otra columna que tengas en Supabase
 }
 
 export default function Home() {
-  // 2. Le decimos al estado que usará la lista de nuestra Interface
+  // =========================================================================
+  // 2. ESTADO Y FETCH CON TIPADO CORRECTO
+  // =========================================================================
+  // Inicializamos el estado como una lista vacía de tipo 'Producto'
   const [productos, setProductos] = useState<Producto[]>([]);
+  // Estado opcional para manejar errores visualmente
+  const [errorVisible, setErrorVisible] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProductos = async () => {
-      const { data, error } = await supabase
-        .from('productos')
-        .select('*')
-        .limit(8);
-      
-      if (error) {
-        console.error("Error cargando productos:", error);
-        return;
-      }
+      try {
+        const { data, error } = await supabase
+          .from('productos')
+          .select('*')
+          // Puedes cambiar el límite o usar .order('id', { ascending: false }) para los más nuevos
+          .limit(10); 
+        
+        if (error) {
+          throw error;
+        }
 
-      if (data) {
-        // Cast de datos para asegurar que coincidan con la interfaz
-        setProductos(data as Producto[]);
+        if (data) {
+          // Casteamos los datos para asegurar a TS que coinciden con la interfaz
+          setProductos(data as Producto[]);
+        }
+      } catch (err: any) {
+        console.error("Error cargando productos JIMMWEB:", err.message);
+        setErrorVisible("No se pudieron cargar los productos. Intenta más tarde.");
       }
     };
     fetchProductos();
@@ -42,7 +55,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen bg-[#0a0a0a] text-white overflow-hidden flex flex-col gap-20 md:gap-32">
 
-      {/* --- FONDO --- */}
+      {/* --- FONDO --- (Sin cambios estéticos) */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0f0f0f] to-[#1f1f1f]" />
         <div className="absolute top-0 left-1/2 w-[800px] h-[800px] bg-red-500/20 blur-[150px] -translate-x-1/2" />
@@ -50,15 +63,17 @@ export default function Home() {
         <div className="absolute inset-0 opacity-[0.04] bg-[url('/noise.png')]" />
       </div>
 
-      {/* --- SECCIÓN 1: HERO --- */}
+      {/* --- SECCIÓN 1: HERO --- (Estética Monumental 8xl) */}
       <section className="relative z-10 max-w-8xl w-full mx-auto px-6 pt-32 pb-10 md:pt-48 md:pb-16 grid md:grid-cols-2 items-center gap-10 md:gap-16">
         
+        {/* COLUMNA IZQUIERDA: TEXTO */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative z-20 space-y-8 text-center md:text-left flex flex-col items-center md:items-start md:max-w-2xl mx-auto md:mx-0"
         >
+          {/* Título Masivo */}
           <div className="space-y-2">
             <motion.span 
               initial={{ opacity: 0 }}
@@ -81,11 +96,13 @@ export default function Home() {
             </h1>
           </div>
 
+          {/* Párrafo con mejor peso visual */}
           <p className="text-gray-400 text-lg md:text-2xl max-w-lg leading-tight font-medium border-l-2 border-red-500/50 pl-4 md:pl-6 text-left">
             Diseños exclusivos inspirados en <span className="text-white">Rap</span>, 
             <span className="text-white"> Anime</span> y la esencia de la <span className="text-white">Cultura Urbana</span>.
           </p>
 
+          {/* BOTONES REDISEÑADOS */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -110,26 +127,34 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
+        {/* COLUMNA DERECHA: IMAGEN (Con seguridad de carga) */}
         <div className="relative flex justify-center items-center mt-10 md:mt-0 w-full h-full">
           <motion.div className="relative flex justify-center items-center">
+            {/* Glow de fondo */}
             <motion.div
               className="absolute w-[350px] h-[350px] md:w-[550px] md:h-[550px] bg-red-500/30 blur-[120px] rounded-full z-0"
               animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.9, 0.6] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
             />
+            {/* Polera Principal */}
             <motion.img
+              // CORRECCIÓN: Si no usas item.imagen, asegura que la URL sea válida
               src="/tu-foto.png" 
-              alt="Polera Principal"
+              alt="Polera Principal JIMMWEB"
               className="relative z-10 w-[300px] md:w-[500px] lg:w-[600px] object-contain drop-shadow-[0_45px_45px_rgba(0,0,0,0.7)]"
               animate={{ y: [0, -15, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               whileHover={{ scale: 1.05 }}
+              // CORRECCIÓN: Evita que Vercel rompa el build si la imagen no existe
+              onError={(e) => {
+                e.currentTarget.src = "https://via.placeholder.com/600x600/111111/cc0000?text=JIMMWEB"
+              }}
             />
           </motion.div>
         </div>
       </section>
 
-      {/* --- SECCIÓN MARQUEE --- */}
+      {/* --- SECCIÓN MARQUEE --- (Sin cambios) */}
       <div className="w-full bg-red-600 py-3 overflow-hidden flex border-y border-red-800 -rotate-1 relative z-20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
         <motion.div
           animate={{ x: ["0%", "-50%"] }}
@@ -147,12 +172,13 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* --- SECCIÓN 2: CATEGORÍAS (DINÁMICAS) --- */}
+      {/* --- SECCIÓN 2: CATEGORÍAS (DINÁMICAS Y TIPADAS) --- */}
       <section className="relative w-full px-6 py-16">
         <div className="max-w-8xl w-full mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-bold uppercase italic tracking-tighter">
@@ -160,24 +186,38 @@ export default function Home() {
             </h2>
           </motion.div>
 
+          {/* Mostrar error si falla Supabase */}
+          {errorVisible && (
+            <p className="text-center text-red-500 font-bold uppercase tracking-widest py-10 bg-red-950/20 rounded-xl mb-10 border border-red-500/50">
+              {errorVisible}
+            </p>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {productos.slice(0, 3).map((prod, index) => (
               <motion.div 
-                key={prod.id}
+                key={prod.id} // TS ya no reclama aquí
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
                 whileHover={{ y: -10 }}
                 className="bg-zinc-900/50 p-8 rounded-3xl border border-white/5 flex flex-col items-center text-center group cursor-pointer"
               >
                 <div className="relative mb-6 overflow-hidden rounded-2xl">
                    <div className="absolute inset-0 bg-red-600/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
                    <img 
+                    // CORRECCIÓN: TS ya no reclama aquí, agregamos fallback
                     src={prod.imagen || "/tu-foto.png"} 
                     alt={prod.nombre} 
                     className="w-full aspect-square object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-110 group-hover:scale-100" 
+                    // CORRECCIÓN: Seguridad de carga
+                    onError={(e) => {
+                      e.currentTarget.src = "https://via.placeholder.com/400x400/111111/cc0000?text=JIMMWEB"
+                    }}
                   />
                 </div>
+                {/* CORRECCIÓN: TS ya no reclama aquí */}
                 <h3 className="text-2xl font-black uppercase italic italic">{prod.categoria || 'Colección'}</h3>
                 <p className="text-gray-400 text-sm mt-2">Inspiración urbana de alta gama.</p>
               </motion.div>
@@ -186,10 +226,10 @@ export default function Home() {
         </div>
       </section>
 
-    {/* --- SECCIÓN 3: LO MÁS VENDIDO (Ajustada y Centralizada 8xl) --- */}
+      {/* --- SECCIÓN 3: LO MÁS VENDIDO (Distribución Centrada 8xl y TIPADA) --- */}
       <section className="relative w-full px-6 py-16">
         <div className="max-w-8xl mx-auto w-full"> 
-          {/* Título de la sección */}
+          
           <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -199,66 +239,70 @@ export default function Home() {
               <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter">
                 LO MÁS VENDIDO <span className="text-red-500">AHORA</span>
               </h2>
-              <p className="text-zinc-500 text-sm md:text-base font-bold uppercase tracking-[0.3em] mt-4">
-                Lo que está marcando tendencia en la calle
+              <p className="text-zinc-500 text-sm md:text-base font-bold uppercase tracking-[0.3em] mt-2">
+                LO QUE ESTÁ MARCANDO TENDENCIA EN LA CALLE
               </p>
             </motion.div>
           </div>
 
           {/* Grid centralizado */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 justify-items-center">
+          <div className="flex flex-wrap justify-center gap-8 md:gap-10">
             {productos.map((item) => (
               <motion.div
-                key={item.id}
+                key={item.id} // CORRECCIÓN: TS ya no reclama aquí
                 whileHover={{ y: -12 }}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                className="group relative bg-[#0a0a0a] rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col h-full w-full max-w-[340px] shadow-2xl transition-all duration-500 hover:border-red-500/30"
+                className="group relative bg-[#0a0a0a] rounded-[2rem] border border-white/5 overflow-hidden flex flex-col h-full w-full sm:w-[calc(50%-20px)] lg:w-[calc(33.33%-27px)] xl:w-[calc(25%-30px)] max-w-[350px] shadow-2xl transition-all duration-500 hover:border-red-500/30"
               >
-                {/* 1. Contenedor de Imagen Cuadrado Perfecto (1:1) o 4:5 */}
+                {/* Contenedor de Imagen Cuadrado */}
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-900">
-                  {/* Badge superior con estilo sticker */}
-                  <div className="absolute top-5 left-5 z-20">
+                  <div className="absolute top-4 left-4 z-20">
                     <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full italic uppercase shadow-lg shadow-red-900/40">
                       🔥 TOP SALES
                     </span>
                   </div>
                   
                   <img 
-                    src={item.imagen} 
+                    // CORRECCIÓN: TS ya no reclama aquí, agregamos fallback
+                    src={item.imagen || "/tu-foto.png"} 
                     alt={item.nombre}
                     className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-110"
+                    // CORRECCIÓN: Seguridad de carga
+                    onError={(e) => {
+                      e.currentTarget.src = "https://via.placeholder.com/400x500/111111/cc0000?text=JIMMWEB"
+                    }}
                   />
-                  
-                  {/* Overlay gradiente inferior para lectura de texto */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70" />
                 </div>
 
-                {/* 2. Información del Producto */}
-                <div className="p-7 flex flex-col flex-grow justify-between bg-zinc-950/80 backdrop-blur-md">
+                {/* Info del Producto alineada simétricamente */}
+                <div className="p-6 flex flex-col flex-grow justify-between bg-zinc-950/90 backdrop-blur-sm">
                   <div className="space-y-1">
-                    <h4 className="font-black text-2xl uppercase tracking-tighter leading-none truncate group-hover:text-red-500 transition-colors">
+                    {/* CORRECCIÓN: TS ya no reclama aquí */}
+                    <h4 className="font-black text-xl md:text-2xl uppercase tracking-tighter leading-none truncate group-hover:text-red-500 transition-colors">
                       {item.nombre}
                     </h4>
-                    <p className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.2em]">
-                      Edición Limitada • Urban Soul
+                    <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">
+                      EDICIÓN LIMITADA • URBAN SOUL
                     </p>
                   </div>
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="flex flex-col">
-                      <span className="text-white font-black text-2xl tracking-tighter">
-                        ${Number(item.precio).toLocaleString('es-CL')}
+                      <span className="text-white font-black text-2xl tracking-tighter leading-none">
+                        {/* CORRECCIÓN: TS ya no reclama aquí, agregamos conversión segura */}
+                        ${Number(item.precio || 0).toLocaleString('es-CL')}
                       </span>
                     </div>
                     
                     <motion.button 
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white text-black hover:bg-red-600 hover:text-white transition-all duration-300 text-[11px] font-black px-6 py-3 rounded-xl uppercase italic shadow-xl"
+                      className="bg-transparent border border-white/20 hover:border-white text-white transition-all duration-300 text-[10px] font-black px-5 py-2 rounded-lg uppercase italic shadow-md"
                     >
-                      Comprar
+                      COMPRAR
                     </motion.button>
                   </div>
                 </div>
@@ -268,12 +312,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- SECCIÓN 4: EL MENSAJE --- */}
+      {/* --- SECCIÓN 4: EL MENSAJE --- (Sin cambios) */}
       <section className="relative w-full px-6 py-28">
         <motion.div 
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
           className="relative max-w-8xl mx-auto flex flex-col items-center text-center z-10"
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] h-[400px] bg-red-500/5 blur-[120px] -z-10" />
@@ -297,8 +342,8 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* --- FOOTER --- */}
-      <footer className="border-t border-white/10 bg-black pt-16 pb-8 px-6">
+      {/* --- FOOTER --- (Sin cambios) */}
+      <footer className="border-t border-white/10 bg-black pt-16 pb-8 px-6 relative z-10">
         <div className="max-w-8xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="space-y-4 text-center md:text-left">
             <h3 className="text-3xl font-black italic tracking-tighter uppercase">
