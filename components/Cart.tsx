@@ -8,7 +8,6 @@ import Image from "next/image"
 export default function Cart() {
   const { items, clearCart, removeItem, updateQuantity, isOpen, toggleCart } = useCart()
 
-  // Cálculo del total asegurando tipos numéricos
   const total = items.reduce((acc, item) => acc + (Number(item.precio) * item.cantidad), 0)
   const metaEnvioGratis = 70000
   const faltaParaGratis = metaEnvioGratis - total
@@ -17,7 +16,6 @@ export default function Cart() {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay con blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -26,7 +24,6 @@ export default function Cart() {
             className="fixed inset-0 bg-black/90 backdrop-blur-md z-[150] cursor-crosshair"
           />
 
-          {/* Panel Lateral */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -34,7 +31,7 @@ export default function Cart() {
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed right-0 top-0 h-full w-full max-w-md bg-[#050505] border-l border-white/10 z-[200] flex flex-col shadow-[[-20px_0px_50px_rgba(0,0,0,0.8)]]"
           >
-            {/* Header */}
+            {/* Header se mantiene igual */}
             <div className="p-8 border-b border-white/5">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -76,10 +73,7 @@ export default function Cart() {
                   <p className="text-white/10 italic uppercase font-black text-2xl tracking-tighter">
                     EL ARSENAL <br /> ESTÁ VACÍO
                   </p>
-                  <button 
-                    onClick={toggleCart}
-                    className="border border-white/10 px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-                  >
+                  <button onClick={toggleCart} className="border border-white/10 px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all">
                     VOLVER AL DEPÓSITO
                   </button>
                 </div>
@@ -88,7 +82,7 @@ export default function Cart() {
                   <motion.div
                     key={`${item.id}-${item.talla}`}
                     layout
-                    className="flex gap-4 items-center bg-zinc-900/20 p-3 border border-white/5 rounded-xl"
+                    className="flex gap-4 items-center bg-zinc-900/20 p-3 border border-white/5 rounded-xl relative overflow-hidden"
                   >
                     <div className="relative h-20 w-20 bg-black border border-white/10 flex-shrink-0 rounded-lg overflow-hidden">
                       <Image src={item.imagen} alt={item.nombre} fill className="object-contain p-2" />
@@ -96,6 +90,17 @@ export default function Cart() {
                     
                     <div className="flex-grow space-y-1">
                       <h4 className="text-[11px] font-black uppercase italic tracking-tighter line-clamp-1">{item.nombre}</h4>
+                      
+                      {/* --- NUEVA ETIQUETA DE PERSONALIZACIÓN --- */}
+                      {item.custom_config && (
+                        <div className="flex items-center gap-1.5 py-1">
+                          <span className="inline-block w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+                          <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter italic">
+                            Custom Drop: {item.custom_config.ancho_impresion_cm}x{item.custom_config.alto_impresion_cm}cm
+                          </span>
+                        </div>
+                      )}
+
                       <p className="text-[9px] font-bold text-gray-500 uppercase">Talla: {item.talla || 'Única'}</p>
                       <p className="text-sm font-black text-red-600 italic">${Number(item.precio).toLocaleString('es-CL')}</p>
                       
@@ -112,7 +117,6 @@ export default function Cart() {
                           >+</button>
                         </div>
 
-                        {/* CORRECCIÓN AQUÍ: removeItem solo recibe 1 argumento */}
                         <button 
                           onClick={() => removeItem(item.id)}
                           className="p-2 group"
@@ -128,7 +132,7 @@ export default function Cart() {
               )}
             </div>
 
-            {/* Footer */}
+            {/* Footer se mantiene igual */}
             {items.length > 0 && (
               <div className="p-8 border-t border-white/10 bg-black space-y-6">
                 <div className="flex justify-between items-end">
