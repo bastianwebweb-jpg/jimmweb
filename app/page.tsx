@@ -3,24 +3,24 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "@/lib/supabaseClient"
-import { useTheme } from "@/store/theme" // 1. IMPORTAR EL THEME
+import { useTheme } from "@/store/theme"
 
 interface Producto {
   id: string;
   nombre: string;
   precio: number;
   imagen: string;
-  categoria?: string;
+  categoria?: string; // Asegúrate de que este nombre coincida con tu tabla
+  tipo?: string;
   description?: string;
   stock?: number;
 }
 
 export default function Home() {
-  const { frecuencia } = useTheme() // 2. CONSUMIR LA FRECUENCIA
+  const { frecuencia } = useTheme()
   const [productos, setProductos] = useState<Producto[]>([]);
   const [errorVisible, setErrorVisible] = useState<string | null>(null);
 
-  // 3. DEFINIR LAS PIELES PARA LA HOME
   const skins = {
     rap: {
       bg: "bg-[#0a0a0a]",
@@ -62,7 +62,8 @@ export default function Home() {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const { data, error } = await supabase.from('productos').select('*').limit(10); 
+        // CORRECCIÓN 1: Eliminamos el .limit(10) para ver todo el Arsenal
+        const { data, error } = await supabase.from('productos').select('*'); 
         if (error) throw error;
         if (data) setProductos(data as Producto[]);
       } catch (err: any) {
@@ -126,7 +127,6 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* COLUMNA DERECHA: IMAGEN CON GLOW DINÁMICO */}
         <div className="relative flex justify-center items-center mt-10 md:mt-0 w-full h-full">
           <motion.div className="relative">
             <motion.div
@@ -145,7 +145,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- SECCIÓN MARQUEE DINÁMICO --- */}
+      {/* --- SECCIÓN MARQUEE --- */}
       <div className={`w-full ${s.marquee} py-3 overflow-hidden flex border-y -rotate-1 relative z-20 shadow-xl transition-colors duration-700`}>
         <motion.div
           animate={{ x: ["0%", "-50%"] }}
@@ -160,24 +160,20 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* --- SECCIÓN CATEGORÍAS (CARDS) --- */}
+      {/* --- SECCIÓN CATEGORÍAS (CARDS CORREGIDAS) --- */}
       <section className="relative w-full px-6 py-16">
         <div className="max-w-8xl w-full mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter">
               NUESTRAS <span className={s.accent}>DIVISIONES</span>
             </h2>
-            <p className="opacity-50 text-xs font-bold tracking-[0.4em] uppercase mt-2">
-              Selecciona tu bando
-            </p>
           </div>
 
-          {/* Grid Ajustable: 1 col móvil, 2 en tablet, 3/5 en desktop */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {["Rap", "Anime", "Urban", "Disney", "Games"].map((cat) => {
-              // Buscamos un producto que coincida con la categoría
+              // CORRECCIÓN 2: Búsqueda robusta ignorando mayúsculas y minúsculas
               const pic = productos.find(
-                (p) => p.categoria?.toLowerCase() === cat.toLowerCase()
+                (p) => p.categoria?.toLowerCase().trim() === cat.toLowerCase()
               );
 
               return (
@@ -186,7 +182,6 @@ export default function Home() {
                   whileHover={{ y: -8, scale: 1.02 }}
                   className={`${s.card} p-3 pb-6 rounded-[2rem] border transition-all duration-500 group cursor-pointer overflow-hidden`}
                 >
-                  {/* Contenedor de Imagen Estilo 'Poster' */}
                   <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[1.5rem] bg-zinc-900 mb-4">
                     <div className={`absolute inset-0 ${s.accentBg} opacity-0 group-hover:opacity-10 transition-opacity z-10`} />
                     
@@ -199,12 +194,11 @@ export default function Home() {
                         }`}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-600 font-black italic text-sm">
-                        NO {cat.toUpperCase()} DROP
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 font-black italic text-[10px] p-4 text-center">
+                        NO {cat.toUpperCase()} <br/> DROP DETECTADO
                       </div>
                     )}
 
-                    {/* Tag Flotante */}
                     <div className="absolute top-4 right-4 z-20">
                       <div className="bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full">
                         <p className="text-[8px] font-black text-white tracking-widest uppercase">New Drop</p>
@@ -212,7 +206,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Texto de Categoría */}
                   <div className="px-2">
                     <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none group-hover:text-red-500 transition-colors">
                       {cat}
@@ -236,7 +229,6 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-8 md:gap-10">
-  {/* Solo tomamos los primeros 3 productos del array */}
               {productos.slice(0, 3).map((item) => (
                 <motion.div
                   key={item.id}
