@@ -62,10 +62,9 @@ export default function Home() {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const { data, error } = await supabase
-          .from('productos')
-          .select('*')
-          .limit(3) //
+        const { data, error } = await supabase.from('productos').select('*').limit(10); 
+        if (error) throw error;
+        if (data) setProductos(data as Producto[]);
       } catch (err: any) {
         setErrorVisible("No se pudieron cargar los productos.");
       }
