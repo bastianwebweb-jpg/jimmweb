@@ -160,31 +160,66 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* --- SECCIÓN CATEGORÍAS (CARDS) --- */}
+      { /* --- SECCIÓN CATEGORÍAS (CARDS) --- */ }
       <section className="relative w-full px-6 py-16">
         <div className="max-w-8xl w-full mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold uppercase italic tracking-tighter">
-              Diseños que marcan <span className={s.accent}>estilo</span>
+              Explora las <span className={s.accent}>Divisiones</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {productos.slice(0, 3).map((prod, index) => (
-              <motion.div 
-                key={prod.id}
-                className={`${s.card} p-8 rounded-3xl border flex flex-col items-center text-center group cursor-pointer transition-all duration-500`}
-              >
-                <div className="relative mb-6 overflow-hidden rounded-2xl">
-                   <div className={`absolute inset-0 ${s.accentBg} opacity-0 group-hover:opacity-20 blur-3xl transition-opacity`} />
-                   <img 
-                    src={prod.imagen || "/tu-foto.png"} 
-                    className={`w-full aspect-square object-cover ${frecuencia === 'normal' ? '' : 'grayscale'} group-hover:grayscale-0 transition-all duration-700`} 
-                  />
-                </div>
-                <h3 className="text-2xl font-black uppercase italic">{prod.categoria || 'Colección'}</h3>
-              </motion.div>
-            ))}
+            {["Rap", "Anime", "Urban"].map((cat) => {
+              // Buscamos el primer producto que coincida con la categoría para la foto
+              const productoRepresentativo = productos.find(
+                (p) => p.categoria?.toLowerCase() === cat.toLowerCase()
+              );
+
+              return (
+                <motion.div
+                  key={cat}
+                  whileHover={{ y: -10 }}
+                  className={`${s.card} p-4 pb-8 rounded-[2.5rem] border flex flex-col items-center text-center group cursor-pointer transition-all duration-500 overflow-hidden`}
+                >
+                  {/* Contenedor de Imagen */}
+                  <div className="relative w-full aspect-[4/5] mb-6 overflow-hidden rounded-[2rem] bg-zinc-900">
+                    <div className={`absolute inset-0 ${s.accentBg} opacity-0 group-hover:opacity-20 blur-3xl transition-opacity z-10`} />
+                    
+                    {productoRepresentativo?.imagen ? (
+                      <img
+                        src={productoRepresentativo.imagen}
+                        alt={cat}
+                        className={`w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110 ${
+                          frecuencia === "normal" ? "" : "grayscale group-hover:grayscale-0"
+                        }`}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-800 font-black italic text-2xl">
+                        {cat} PIC
+                      </div>
+                    )}
+
+                    {/* Overlay de nombre de categoría sobre la imagen */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end justify-center pb-6">
+                      <span className="text-white text-xs font-black tracking-[0.5em] uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+                        Ver Colección
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Título de la Categoría */}
+                  <div className="space-y-1">
+                      <h3 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">
+                        {cat}
+                      </h3>
+                      <p className={`${s.accent} text-[10px] font-black uppercase tracking-[0.3em] opacity-60`}>
+                          Premium Drop
+                      </p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
