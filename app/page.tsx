@@ -17,11 +17,15 @@ interface Producto {
 }
 
 export default function Home() {
-  const { frecuencia } = useTheme()
+  const { frecuencia } = useTheme();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [errorVisible, setErrorVisible] = useState<string | null>(null);
+  
+  // 1. Estado para el efecto de "invasión ambiental"
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
-  const skins = {
+  // 2. Definición del objeto skins (Debe ir ANTES de usar la variable 's')
+  const skins: Record<string, any> = {
     rap: {
       bg: "bg-[#0a0a0a]",
       text: "text-white",
@@ -35,6 +39,7 @@ export default function Home() {
     },
     anime: {
       bg: "bg-[#0a0015]",
+      video: "/videos/anime-glitch.mp4",
       text: "text-cyan-50",
       accent: "text-cyan-400",
       accentBg: "bg-cyan-500",
@@ -54,10 +59,60 @@ export default function Home() {
       marquee: "bg-zinc-100 border-zinc-200",
       card: "bg-white border-zinc-200 shadow-sm",
       textura: "opacity-0"
+    },
+    disney: {
+      bg: "bg-[#1a0505]",
+      text: "text-white",
+      accent: "text-rose-500",
+      accentBg: "bg-rose-600",
+      accentShadow: "shadow-[0_0_30px_rgba(225,29,72,0.5)]",
+      glow: "bg-rose-600/30",
+      marquee: "bg-rose-600 border-rose-800",
+      card: "bg-rose-950/20 border-rose-500/20",
+      textura: "opacity-[0.08] bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]"
+    },
+    games: {
+      bg: "bg-[#051a10]",
+      video: "/videos/games-retro.mp4", // Ruta a tu clip de minijuegos
+      text: "text-green-50",
+      accent: "text-green-400",
+      accentBg: "bg-green-500",
+      accentShadow: "shadow-[0_0_30px_rgba(34,197,94,0.5)]",
+      glow: "bg-green-500/20",
+      marquee: "bg-green-500 border-green-700",
+      card: "bg-green-950/20 border-green-500/20",
+      textura: "opacity-[0.15] bg-[url('https://www.transparenttextures.com/patterns/pixel-weave.png')]"
+    },
+    urban: {
+      bg: "bg-[#111111]",
+      text: "text-yellow-50",
+      accent: "text-yellow-500",
+      accentBg: "bg-yellow-600",
+      accentShadow: "shadow-[0_0_30px_rgba(202,138,4,0.4)]",
+      glow: "bg-yellow-500/10",
+      marquee: "bg-yellow-600 border-yellow-800",
+      card: "bg-zinc-900/80 border-yellow-500/20",
+      textura: "opacity-[0.1] bg-[url('https://www.transparenttextures.com/patterns/road.png')]"
     }
-  }
+  };
 
-  const s = skins[frecuencia] || skins.rap
+  // 3. Definición de la skin activa (Solo UNA vez)
+  const frecuenciaActiva = hoveredCategory?.toLowerCase() || frecuencia;
+  const s = skins[frecuenciaActiva] || skins.rap;
+
+  // 4. useEffect para cargar productos
+  useEffect(() => {
+    const fetchProductos = async () => {
+      try {
+        const { data, error } = await supabase.from('productos').select('*');
+        if (error) throw error;
+        if (data) setProductos(data as Producto[]);
+      } catch (err: any) {
+        setErrorVisible("No se pudieron cargar los productos.");
+      }
+    };
+    fetchProductos();
+  }, []);
 
   useEffect(() => {
     const fetchProductos = async () => {
@@ -77,9 +132,30 @@ export default function Home() {
     <main className={`relative min-h-screen ${s.bg} ${s.text} transition-colors duration-700 overflow-hidden flex flex-col gap-20 md:gap-32`}>
 
       {/* --- FONDO DINÁMICO --- */}
-      <div className="absolute inset-0 -z-10">
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        {/* Capa de fondo base */}
         <div className={`absolute inset-0 ${frecuencia === 'normal' ? 'bg-white' : 'bg-gradient-to-br from-black via-[#0f0f0f] to-[#1f1f1f]'}`} />
+
+        {/* --- PASO 2: CAPA DE VIDEO ATMOSFÉRICO --- */}
+        {s.video && (
+          <motion.video
+            key={s.video}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }} // Opacidad baja para que no tape el contenido
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover mix-blend-screen"
+          />
+        )}
+
+        {/* Resplandor (Glow) central */}
         <div className={`absolute top-0 left-1/2 w-[800px] h-[800px] ${s.glow} blur-[150px] -translate-x-1/2 transition-colors duration-1000`} />
+        
+        {/* Textura de ruido/patrón */}
         <div className={`absolute inset-0 pointer-events-none ${s.textura} transition-opacity duration-700`} />
       </div>
 
@@ -171,7 +247,6 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {["Rap", "Anime", "Urban", "Disney", "Games"].map((cat) => {
-              // CORRECCIÓN 2: Búsqueda robusta ignorando mayúsculas y minúsculas
               const pic = productos.find(
                 (p) => p.categoria?.toLowerCase().trim() === cat.toLowerCase()
               );
@@ -179,8 +254,12 @@ export default function Home() {
               return (
                 <motion.div
                   key={cat}
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className={`${s.card} p-3 pb-6 rounded-[2rem] border transition-all duration-500 group cursor-pointer overflow-hidden`}
+                  // --- CONEXIÓN AL SISTEMA DE AMBIENTE ---
+                  onMouseEnter={() => setHoveredCategory(cat.toLowerCase())}
+                  onMouseLeave={() => setHoveredCategory(null)}
+                  // ---------------------------------------
+                  whileHover={{ y: -12, scale: 1.05 }}
+                  className={`${s.card} p-3 pb-6 rounded-[2rem] border transition-all duration-700 group cursor-pointer overflow-hidden`}
                 >
                   <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[1.5rem] bg-zinc-900 mb-4">
                     <div className={`absolute inset-0 ${s.accentBg} opacity-0 group-hover:opacity-10 transition-opacity z-10`} />
