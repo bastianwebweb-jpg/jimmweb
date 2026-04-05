@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase"
+import { supabase } from "@/lib/supabaseClient"
 import Marquee from "@/components/Marquee"
 import Image from "next/image"
 import ProductActions from "@/components/ProductActions"

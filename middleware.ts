@@ -34,24 +34,34 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Usamos getSession para asegurar la lectura de la cookie actual
-  const { data: { session } } = await supabase.auth.getSession()
-  const user = session?.user
+  // IMPORTANTE: Usamos getUser() para validar la sesión en el servidor
+  const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  // Filtro para la zona de administración
   if (path.startsWith('/admin')) {
-    console.log("--- INTENTO EN /ADMIN ---")
-    console.log("Email en sesión:", user?.email || "No detectado")
-
-    if (!user || user.email !== 'bastianwebweb@gmail.com') {
-      console.log("Redirigiendo a /login por falta de permisos.");
+    // 1. Si no hay usuario en absoluto, al login
+    if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    console.log("Acceso autorizado.");
+
+    // 2. BYPASS DE EMERGENCIA: Si el email coincide, entra directo
+    if (user.email === 'bastianvidal30@gmail.com') {
+      return response
+    }
+
+    // 3. Si es otro usuario, verificamos rol en la tabla
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
   }
 
-  // Evitar que usuarios logueados vuelvan a login/register
+  // Evitar que usuarios logueados vean login/register
   if (user && (path === '/login' || path === '/register')) {
     return NextResponse.redirect(new URL('/', request.url))
   }

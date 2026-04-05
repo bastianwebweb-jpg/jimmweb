@@ -31,25 +31,47 @@ export default function AdminPage() {
   const [form, setForm] = useState<Product>(estadoInicial)
   const [isUploading, setIsUploading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false) // Estado de seguridad
+  const [loading, setLoading] = useState(true) 
+  const [isAdmin, setIsAdmin] = useState(false) 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
-  // 1. VERIFICACIÓN DE SEGURIDAD (Capa Extra)
+  // 1. VERIFICACIÓN DE SEGURIDAD POR ROL (Sincronizado con SQL)
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      // Reemplaza con tu email real de admin
-      if (!user || user.email !== 'bastianwebweb@gmail.com') {
-        router.push('/')
-      } else {
+    const checkAdminRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+          router.push("/login")
+          return
+        }
+
+        // Consultamos la tabla profiles que creamos en el SQL Editor
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (error || profile?.role !== 'admin') {
+          console.error("ACCESO DENEGADO: No tienes permisos de administrador.")
+          router.push("/")
+          return
+        }
+
+        // Si es admin, procedemos
         setIsAdmin(true)
-        fetchProducts()
-        fetchOrders()
+        await Promise.all([fetchProducts(), fetchOrders()])
+      } catch (err) {
+        console.error("Error en el sistema de seguridad:", err)
+        router.push("/login")
+      } finally {
+        setLoading(false)
       }
     }
-    checkUser()
+
+    checkAdminRole()
   }, [router])
 
   const fetchProducts = async () => {
@@ -84,9 +106,13 @@ export default function AdminPage() {
     if (!form.nombre || !form.precio) return alert("Nombre y Precio obligatorios")
     setIsSubmitting(true)
     try {
+      // Limpiamos el objeto form para que no envíe el ID si es nuevo
+      const { id, ...dataToSave } = form;
+      
       const { error } = editingId 
-        ? await supabase.from("productos").update(form).eq("id", editingId)
-        : await supabase.from("productos").insert([form])
+        ? await supabase.from("productos").update(dataToSave).eq("id", editingId)
+        : await supabase.from("productos").insert([dataToSave])
+      
       if (error) throw error
       setForm(estadoInicial)
       setEditingId(null)
@@ -110,8 +136,18 @@ export default function AdminPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Si no es admin, no renderizamos nada (previene parpadeo de contenido)
-  if (!isAdmin) return <div className="min-h-screen bg-black" />
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-6" />
+        <p className="text-white font-black italic animate-pulse uppercase tracking-[0.3em] text-[10px]">
+          Sincronizando con el Arsenal...
+        </p>
+      </div>
+    )
+  }
+
+  if (!isAdmin) return null
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans p-6 md:p-12">
@@ -133,7 +169,7 @@ export default function AdminPage() {
           <div className="text-right">
             <p className="text-[9px] font-black text-gray-600 uppercase">Valor Stock</p>
             <p className="text-3xl font-black italic text-red-600">
-              ${products.reduce((acc, p) => acc + (p.precio * p.stock), 0).toLocaleString()}
+              ${products.reduce((acc, p) => acc + (Number(p.precio) * Number(p.stock)), 0).toLocaleString()}
             </p>
           </div>
         </div>
@@ -157,7 +193,7 @@ export default function AdminPage() {
 
       {view === 'inventory' ? (
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* FORMULARIO LADO IZQUIERDO */}
+          {/* FORMULARIO */}
           <div className="lg:col-span-5 space-y-6">
             <div className="sticky top-12 border border-white/10 bg-[#0a0a0a] p-8 shadow-2xl">
               <div className="flex items-center gap-3 mb-8">
@@ -229,7 +265,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* LISTADO LADO DERECHO */}
+          {/* LISTA PRODUCTOS */}
           <div className="lg:col-span-7">
             <div className="grid gap-4">
               {products.map((p) => (
@@ -242,7 +278,7 @@ export default function AdminPage() {
                       <span className="text-[8px] bg-zinc-800 px-1.5 py-0.5 font-bold uppercase">{p.categoria}</span>
                       <h3 className="text-lg font-black uppercase italic tracking-tighter">{p.nombre}</h3>
                     </div>
-                    <p className="text-red-600 font-black italic text-xl mt-1">${p.precio.toLocaleString()}</p>
+                    <p className="text-red-600 font-black italic text-xl mt-1">${Number(p.precio).toLocaleString()}</p>
                     <div className="flex items-center gap-4 mt-1">
                       <p className="text-[10px] text-gray-500 font-bold uppercase">Stock: <span className={p.stock < 5 ? "text-red-500" : "text-white"}>{p.stock} U</span></p>
                     </div>
@@ -257,7 +293,7 @@ export default function AdminPage() {
           </div>
         </div>
       ) : (
-        /* VISTA DE PEDIDOS */
+        /* VISTA PEDIDOS */
         <div className="max-w-5xl mx-auto space-y-6">
           {orders.length === 0 ? (
             <div className="border border-white/5 p-40 text-center">
@@ -267,9 +303,6 @@ export default function AdminPage() {
           ) : (
             orders.map((order) => (
               <div key={order.id} className="bg-[#0a0a0a] border border-white/5 p-8 hover:border-red-600/30 transition-all relative overflow-hidden group">
-                {/* Indicador de estado visual */}
-                <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 bg-red-600/10 rotate-45 group-hover:bg-red-600/20 transition-colors" />
-                
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8 relative z-10">
                   <div>
                     <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-2">
@@ -277,7 +310,7 @@ export default function AdminPage() {
                       ORDEN_ENTRANTE
                     </span>
                     <h3 className="text-4xl font-black italic mt-2 uppercase tracking-tighter text-white">{order.nombre_cliente}</h3>
-                    <p className="text-[9px] text-zinc-600 font-mono mt-1 tracking-widest">TRANSMISSION_ID: {order.id}</p>
+                    <p className="text-[9px] text-zinc-600 font-mono mt-1 tracking-widest">ID: {order.id}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-5xl font-black italic text-white tracking-tighter leading-none">${order.total?.toLocaleString()}</p>
@@ -286,44 +319,18 @@ export default function AdminPage() {
                     </span>
                   </div>
                 </div>
-                
                 <div className="border-t border-white/10 pt-8 grid grid-cols-1 md:grid-cols-2 gap-16 relative z-10">
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <span className="w-4 h-[1px] bg-gray-500" /> Destino del Arsenal
-                      </p>
-                      <div className="text-sm font-bold uppercase italic bg-white/5 p-4 border-l-2 border-white/20">
-                        <p className="text-white text-lg">{order.direccion}</p>
-                        <p className="text-gray-400 mt-1">{order.ciudad}, {order.region}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 bg-white/5 border border-white/5">
-                        <p className="text-[8px] text-zinc-500 font-black uppercase mb-1">Email</p>
-                        <p className="text-[11px] font-bold text-white truncate">{order.email}</p>
-                      </div>
-                      <div className="p-3 bg-white/5 border border-white/5">
-                        <p className="text-[8px] text-zinc-500 font-black uppercase mb-1">Teléfono</p>
-                        <p className="text-[11px] font-bold text-white">{order.telefono}</p>
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-gray-500 uppercase">Destino</p>
+                    <p className="text-sm font-bold">{order.direccion}, {order.ciudad}</p>
                   </div>
-
-                  <div>
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <span className="w-4 h-[1px] bg-gray-500" /> Manifiesto de Carga
-                    </p>
-                    <div className="space-y-2">
-                      {order.items?.map((item: any, i: number) => (
-                        <div key={i} className="flex justify-between items-center bg-zinc-900/50 border border-white/5 p-3 px-5 group-hover:bg-red-600/5 transition-colors">
-                          <p className="text-xs font-black uppercase italic">
-                            <span className="text-red-600 mr-2">{item.cantidad}X</span> {item.nombre}
-                          </p>
-                          <span className="text-[9px] font-black bg-white text-black px-2 py-0.5 skew-x-[-10deg]">TALLA_{item.talla}</span>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-gray-500 uppercase">Items</p>
+                    {order.items?.map((item: any, i: number) => (
+                      <div key={i} className="text-xs font-black uppercase">
+                        <span className="text-red-600">{item.cantidad}X</span> {item.nombre} (TALLA {item.talla})
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

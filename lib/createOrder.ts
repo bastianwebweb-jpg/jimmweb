@@ -1,4 +1,4 @@
-import { supabase } from "./supabase"
+import { supabase } from "@/lib/supabaseClient"
 
 export async function createOrder(items: any[]) {
   try {

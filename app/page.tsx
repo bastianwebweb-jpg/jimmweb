@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { supabase } from "@/lib/supabase"
+import { supabase } from "@/lib/supabaseClient"
 import { useTheme } from "@/store/theme" // 1. IMPORTAR EL THEME
 
 interface Producto {

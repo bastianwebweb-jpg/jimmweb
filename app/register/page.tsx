@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { supabase } from "@/lib/supabase" // Ajustado a tu instancia
+import { supabase } from "@/lib/supabaseClient" // Ajustado a tu instancia
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
