@@ -199,9 +199,10 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-8 md:gap-10">
-            {productos.map((item) => (
-              <motion.div
-                key={item.id}
+  {/* Solo tomamos los primeros 3 productos del array */}
+              {productos.slice(0, 3).map((item) => (
+                <motion.div
+                  key={item.id}
                 className={`group relative ${frecuencia === 'normal' ? 'bg-white' : 'bg-[#0a0a0a]'} rounded-[2rem] border ${frecuencia === 'normal' ? 'border-zinc-200' : 'border-white/5'} overflow-hidden flex flex-col w-full sm:w-[calc(50%-20px)] lg:w-[calc(33.33%-27px)] max-w-[350px] shadow-2xl transition-all duration-500 hover:border-${s.accent === 'text-red-500' ? 'red-500/30' : 'cyan-500/30'}`}
               >
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-900">
