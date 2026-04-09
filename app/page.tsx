@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "@/lib/supabaseClient"
 import { useTheme } from "@/store/theme"
+import Link from "next/link"
 
 interface Producto {
   id: string;
@@ -236,13 +237,14 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* --- SECCIÓN CATEGORÍAS (CARDS CORREGIDAS) --- */}
+      {/* --- SECCIÓN CATEGORÍAS (CON REDIRECCIÓN) --- */}
       <section className="relative w-full px-6 py-16">
         <div className="max-w-8xl w-full mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter">
-              NUESTRAS <span className={s.accent}>DIVISIONES</span>
+            <h2 className="text-3xl md:text-7xl font-black uppercase italic tracking-tighter leading-none">
+              NUESTRAS <span className={`${s.accent} block md:inline`}>DIVISIONES</span>
             </h2>
+            <div className={`h-2 w-24 ${s.accentBg} mx-auto mt-4 skew-x-[-20deg]`} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -252,46 +254,60 @@ export default function Home() {
               );
 
               return (
-                <motion.div
-                  key={cat}
-                  // --- CONEXIÓN AL SISTEMA DE AMBIENTE ---
-                  onMouseEnter={() => setHoveredCategory(cat.toLowerCase())}
-                  onMouseLeave={() => setHoveredCategory(null)}
-                  // ---------------------------------------
-                  whileHover={{ y: -12, scale: 1.05 }}
-                  className={`${s.card} p-3 pb-6 rounded-[2rem] border transition-all duration-700 group cursor-pointer overflow-hidden`}
-                >
-                  <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[1.5rem] bg-zinc-900 mb-4">
-                    <div className={`absolute inset-0 ${s.accentBg} opacity-0 group-hover:opacity-10 transition-opacity z-10`} />
-                    
-                    {pic?.imagen ? (
-                      <img
-                        src={pic.imagen}
-                        alt={cat}
-                        className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${
-                          frecuencia === "normal" ? "" : "grayscale group-hover:grayscale-0"
-                        }`}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 font-black italic text-[10px] p-4 text-center">
-                        NO {cat.toUpperCase()} <br/> DROP DETECTADO
-                      </div>
-                    )}
+                <Link href={`/division/${cat.toLowerCase()}`} key={cat} className="block group">
+                  <motion.div
+                    onMouseEnter={() => setHoveredCategory(cat.toLowerCase())}
+                    onMouseLeave={() => setHoveredCategory(null)}
+                    whileHover={{ y: -10 }}
+                    className={`${s.card} relative p-2 rounded-[1.5rem] border transition-all duration-500 group-hover:border-red-600/50 cursor-pointer overflow-hidden flex flex-col`}
+                  >
+                    {/* Contenedor de Imagen */}
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[1.2rem] bg-zinc-900">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 opacity-60 group-hover:opacity-40 transition-opacity" />
+                      
+                      {pic?.imagen ? (
+                        <img
+                          src={pic.imagen}
+                          alt={cat}
+                          className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${
+                            frecuencia === "normal" ? "" : "grayscale group-hover:grayscale-0"
+                          }`}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 font-black italic text-[10px] p-4 text-center">
+                          NO {cat.toUpperCase()} <br/> DROP DETECTADO
+                        </div>
+                      )}
 
-                    <div className="absolute top-4 right-4 z-20">
-                      <div className="bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full">
-                        <p className="text-[8px] font-black text-white tracking-widest uppercase">New Drop</p>
+                      {/* Badge "NEW DROP" */}
+                      <div className="absolute top-3 right-3 z-20">
+                        <div className="bg-white text-black text-[8px] font-black px-2 py-1 skew-x-[-10deg] shadow-lg">
+                          NEW DROP
+                        </div>
+                      </div>
+
+                      {/* Nombre de Categoría */}
+                      <div className="absolute bottom-4 left-4 z-20">
+                        <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none text-white drop-shadow-md group-hover:text-red-500 transition-colors duration-300">
+                          {cat}
+                        </h3>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="px-2">
-                    <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none group-hover:text-red-500 transition-colors">
-                      {cat}
-                    </h3>
-                    <div className={`h-1 w-8 ${s.accentBg} mt-2 group-hover:w-full transition-all duration-500`} />
-                  </div>
-                </motion.div>
+                    {/* Footer de la Card */}
+                    <div className="px-3 py-4 flex items-center justify-between">
+                      <span className="text-[10px] font-bold opacity-40 tracking-widest uppercase">
+                        Div_0{["Rap", "Anime", "Urban", "Disney", "Games"].indexOf(cat) + 1}
+                      </span>
+                      <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                        <span className="text-xs font-bold">→</span>
+                      </div>
+                    </div>
+
+                    {/* Borde de Brillo Interno */}
+                    <div className={`absolute inset-0 border-2 border-transparent group-hover:border-${s.accent === 'text-red-500' ? 'red-600/30' : 'cyan-500/30'} rounded-[1.5rem] transition-all duration-500 pointer-events-none`} />
+                  </motion.div>
+                </Link>
               );
             })}
           </div>
