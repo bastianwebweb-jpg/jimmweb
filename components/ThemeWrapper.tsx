@@ -11,11 +11,12 @@ export default function ThemeWrapper({ children, producto }: { children: React.R
   const skins = {
     rap: "theme-rap",
     anime: "theme-anime",
-    disney: "theme-disney", // Añadimos Disney
+    disney: "theme-disney", 
+    games: "theme-games", // Añadido Games para futuro
+    urban: "theme-urban", // Añadido Urban para futuro
     normal: "theme-normal"
   }
 
-  // Seleccionamos la skin actual. Si no existe en el objeto, usamos 'normal'.
   const currentSkin = skins[categoriaActiva as keyof typeof skins] || skins.normal;
 
   return (
@@ -24,7 +25,7 @@ export default function ThemeWrapper({ children, producto }: { children: React.R
       {/* Gradiente de fondo dinámico */}
       <div className={`fixed top-0 left-0 w-full h-[800px] -z-10 transition-opacity duration-1000
         ${categoriaActiva === 'rap' ? 'bg-gradient-to-b from-red-900/30 to-transparent' : 
-          categoriaActiva === 'anime' ? 'bg-gradient-to-b from-cyan-900/30 to-transparent' : 
+          categoriaActiva === 'anime' ? 'bg-gradient-to-b from-cyan-950/40 to-transparent' : 
           categoriaActiva === 'disney' ? 'bg-gradient-to-b from-blue-400/20 to-transparent' : 
           'bg-gradient-to-b from-zinc-200 to-transparent'}`} 
       />
@@ -35,14 +36,22 @@ export default function ThemeWrapper({ children, producto }: { children: React.R
           --accent: #ef4444; --main: #fff; --bg-card: rgba(24, 24, 27, 0.6); 
           --desc: #a1a1aa; --bg-page: #050505; --font: 'Inter', sans-serif;
         }
+
+        /* AJUSTE ANIME: Fondo negro absoluto para que resalte el fondo public/images/anime-bg.jpg */
         .theme-anime { 
-          --accent: #22d3ee; --main: #fff; --bg-card: rgba(15, 0, 40, 0.7); 
-          --desc: #cffafe; --bg-page: #0a0015; --font: 'Verdana', sans-serif;
+          --accent: #22d3ee; 
+          --main: #fff; 
+          --bg-card: rgba(10, 10, 20, 0.5); 
+          --desc: #cffafe; 
+          --bg-page: #010103; /* Negro casi total para que el neón de la imagen destaque */
+          --font: 'Verdana', sans-serif;
         }
+
         .theme-disney { 
           --accent: #3b82f6; --main: #1e1b4b; --bg-card: rgba(255, 255, 255, 0.8); 
           --desc: #4b5563; --bg-page: #f0f9ff; --font: 'Georgia', serif;
         }
+
         .theme-normal { 
           --accent: #18181b; --main: #000; --bg-card: #fff; 
           --desc: #71717a; --bg-page: #f8f8f8; --font: sans-serif;
@@ -64,7 +73,6 @@ export default function ThemeWrapper({ children, producto }: { children: React.R
         .text-description { color: var(--desc); }
         .bg-card-glass { background-color: var(--bg-card); backdrop-blur: 12px; }
         
-        /* Ajuste para que el título del producto siempre use el color principal del tema */
         .product-title { color: var(--main); }
       `}</style>
       

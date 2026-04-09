@@ -24,11 +24,11 @@ export default function AnimeDivision() {
       setDbError(null);
 
       try {
-        // IMPORTANTE: Asegúrate de que en Supabase la categoría diga exactamente "Anime"
+        // Usamos .ilike para que encuentre "anime" aunque esté en minúsculas en la DB
         const { data, error } = await supabase
           .from('productos')
           .select('*')
-          .eq('categoria', 'Anime'); 
+          .ilike('categoria', 'anime'); 
 
         if (error) {
           console.error("❌ Error de Supabase:", error.message);
@@ -49,18 +49,18 @@ export default function AnimeDivision() {
 
   return (
     <main className="relative min-h-screen bg-[#0a0015] text-cyan-50 overflow-hidden">
-      
-      {/* --- FONDO ANIME --- */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-black/70 z-10" /> 
+      {/* --- FONDO ANIME DIAGNÓSTICO --- */}
+        <div className="fixed inset-0 z-0"> {/* Cambiado a fixed y z-0 para asegurar posición */}
+        <div className="absolute inset-0 bg-black/60 z-10" /> {/* Velo negro */}
         <img 
-          src="/images/anime-bg.jpg" 
-          className="w-full h-full object-cover opacity-50 grayscale-[0.2]"
-          alt="Anime Background"
+            src="/images/anime-bg.jpg" 
+            className="w-full h-full object-cover opacity-100" // Opacidad al 100% para probar
+            style={{ border: '5px solid red' }} // BORDE TEMPORAL PARA DIAGNÓSTICO
+            alt="Fondo de prueba"
+            onLoad={() => console.log("✅ Imagen cargada correctamente")}
+            onError={() => console.error("❌ La imagen falló al cargar en /images/anime-bg.jpg")}
         />
-        {/* Scanlines Effect */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,255,255,0.02)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] bg-[length:100%_4px,3px_100%] pointer-events-none z-20" />
-      </div>
+        </div>
 
       {/* --- HEADER --- */}
       <section className="relative z-30 pt-20 pb-10 px-6 max-w-7xl mx-auto">
